@@ -1,6 +1,6 @@
-import logging
+﻿import logging
 
-from fastapi import FastAPI, Query
+from fastapi import Body, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,12 +9,18 @@ from link_parser import LinkParseError, parse_telegram_link
 from rate_limit import RateLimitMiddleware
 from telegram_service import (
     TelegramFetchError,
+    auth_send_code,
+    auth_status,
+    auth_verify,
     fetch_post_comments,
     init_client,
     shutdown_client,
 )
 
-FRONTEND_DIR = __import__("pathlib").Path(__file__).resolve().parent.parent / "frontend"
+from pathlib import Path as _P
+FRONTEND_DIR = _P(__file__).resolve().parent / "frontend"
+if not FRONTEND_DIR.is_dir():
+    FRONTEND_DIR = _P(__file__).resolve().parent.parent / "frontend"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,7 +42,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event() -> None:
-    await init_client()
+    try:
+        await init_client()
+    except Exception as exc:
+        logger.warning("Telegram not ready yet: %s", exc)
 
 
 @app.on_event("shutdown")
@@ -88,6 +97,36 @@ async def get_comments(link: str = Query(..., description="Telegram post URL")):
     }
 
 
+@app.get("/auth/status")
+async def auth_status_route():
+    try:
+        return await auth_status()
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"error": str(exc)})
+
+
+@app.post("/auth/send_code")
+async def auth_send_code_route(body: dict = Body(...)):
+    phone = str(body.get("phone", "")).strip()
+    if not phone:
+        return JSONResponse(status_code=400, content={"error": "Phone required"})
+    try:
+        await auth_send_code(phone)
+    except Exception as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    return {"ok": True}
+
+
+@app.post("/auth/verify")
+async def auth_verify_route(body: dict = Body(...)):
+    try:
+        return await auth_verify(
+            str(body.get("code", "")).strip(), body.get("password") or None
+        )
+    except Exception as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
@@ -95,3 +134,4 @@ async def health():
 
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+

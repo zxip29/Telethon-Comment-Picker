@@ -7,12 +7,16 @@ import {
 const form = document.getElementById("fetch-form");
 const linkInput = document.getElementById("link-input");
 const fetchBtn = document.getElementById("fetch-btn");
+const stopFetchBtn = document.getElementById("stop-fetch-btn");
 const copyBtn = document.getElementById("copy-btn");
 const statusEl = document.getElementById("status");
 const resultsEl = document.getElementById("results");
 const filtersPanel = document.getElementById("filters-panel");
 const countValue = document.getElementById("count-value");
 const countFetched = document.getElementById("count-fetched");
+const latencyValue = document.getElementById("latency-value");
+const lineCountBadge = document.getElementById("line-count-badge");
+const sessionBadge = document.getElementById("session-badge");
 const commentsPre = document.getElementById("comments-pre");
 
 const filterDedupe = document.getElementById("filter-dedupe");
@@ -21,11 +25,25 @@ const filterTextOnly = document.getElementById("filter-text-only");
 
 let allComments = [];
 let copyText = "";
+let activeController = null;
 
 const API_BASE =
   window.location.port === "8000" || window.location.hostname === "127.0.0.1"
     ? ""
     : "http://127.0.0.1:8000";
+
+async function loadSessionInfo() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/status`);
+    const data = await res.json();
+    if (data.authorized && sessionBadge) {
+      sessionBadge.textContent = `MTProto · ${data.name || "USER"}`;
+    }
+  } catch {
+    // ignore
+  }
+}
+loadSessionInfo();
 
 function setStatus(message, type) {
   statusEl.textContent = message;
@@ -49,8 +67,11 @@ function getFilterOptions() {
 function setLoading(loading) {
   fetchBtn.disabled = loading;
   linkInput.disabled = loading;
+  if (stopFetchBtn) {
+    stopFetchBtn.classList.toggle("hidden", !loading);
+  }
   if (loading) {
-    setStatus("Fetching comments from Telegram…", "loading");
+    setStatus("[EXEC] Fetching paginated comments from Telegram MTProto…", "loading");
     resultsEl.classList.add("hidden");
     allComments = [];
     copyText = "";
@@ -64,26 +85,33 @@ function applyFiltersAndRender() {
 
   countValue.textContent = String(filtered.length);
   countFetched.textContent = String(allComments.length);
-  commentsPre.textContent = copyText || "(no comments match filters)";
+  if (lineCountBadge) {
+    lineCountBadge.textContent = `${filtered.length} lines`;
+  }
+  commentsPre.textContent = copyText || "// 0 comments match active filter pipeline";
 
   copyBtn.disabled = !copyText;
   resultsEl.classList.remove("hidden");
 }
 
-function onDataLoaded(data) {
+function onDataLoaded(data, elapsedMs) {
   allComments = data.comments || [];
   const total = data.total_fetched ?? allComments.length;
 
   countFetched.textContent = String(total);
+  if (latencyValue) {
+    latencyValue.textContent = `${elapsedMs}ms`;
+  }
 
   if (total === 0) {
     countValue.textContent = "0";
-    commentsPre.textContent = "";
+    if (lineCountBadge) lineCountBadge.textContent = "0 lines";
+    commentsPre.textContent = "// empty result set";
     copyBtn.disabled = true;
     resultsEl.classList.remove("hidden");
     filtersPanel.classList.add("hidden");
     if (data.message) {
-      setStatus(data.message, "info");
+      setStatus(`[INFO] ${data.message}`, "info");
     }
     return;
   }
@@ -104,8 +132,12 @@ function onDataLoaded(data) {
 async function copyAll() {
   if (!copyText) return;
   try {
-    await navigator.clipboard.writeText(copyText);
-    setStatus("Copied to clipboard.", "info");
+    if (window.AndroidBridge && typeof window.AndroidBridge.copyToClipboard === "function") {
+      window.AndroidBridge.copyToClipboard(copyText);
+    } else {
+      await navigator.clipboard.writeText(copyText);
+    }
+    setStatus(`[OK] Copied ${copyText.split("\n").length} lines to clipboard.`, "info");
     setTimeout(clearStatus, 2000);
   } catch {
     const range = document.createRange();
@@ -113,42 +145,62 @@ async function copyAll() {
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    setStatus("Press Ctrl+C to copy the selected text.", "info");
+    setStatus("[INFO] Selected text — press Copy.", "info");
   }
 }
 
 copyBtn.addEventListener("click", copyAll);
+
+if (stopFetchBtn) {
+  stopFetchBtn.addEventListener("click", () => {
+    if (activeController) {
+      activeController.abort();
+      activeController = null;
+    }
+  });
+}
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const link = linkInput.value.trim();
   if (!link) return;
 
+  if (activeController) {
+    activeController.abort();
+  }
+  activeController = new AbortController();
+
   setLoading(true);
+  const t0 = performance.now();
 
   try {
     const url = `${API_BASE}/comments?link=${encodeURIComponent(link)}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: activeController.signal });
     const data = await res.json();
+    const elapsedMs = Math.round(performance.now() - t0);
 
     if (!res.ok) {
       const msg = data.detail
-        ? `${data.error || "Error"}: ${data.detail}`
-        : data.error || `Request failed (${res.status})`;
+        ? `[HTTP ${res.status}] ${data.error || "Error"}: ${data.detail}`
+        : `[HTTP ${res.status}] ${data.error || "Request failed"}`;
       setStatus(msg, "error");
       resultsEl.classList.add("hidden");
       return;
     }
 
-    onDataLoaded(data);
-  } catch {
-    setStatus(
-      "Could not reach the API. Is the backend running on http://127.0.0.1:8000?",
-      "error"
-    );
+    onDataLoaded(data, elapsedMs);
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      setStatus("[ABORTED] Fetch request cancelled by user.", "error");
+    } else {
+      setStatus(
+        "[ERR] Connection refused on 127.0.0.1:8000 — check if daemon is RUNNING.",
+        "error"
+      );
+    }
     resultsEl.classList.add("hidden");
   } finally {
-    fetchBtn.disabled = false;
-    linkInput.disabled = false;
+    activeController = null;
+    setLoading(false);
   }
 });

@@ -317,3 +317,68 @@ async def fetch_post_comments(channel: str, message_id: int) -> list[dict[str, s
     except Exception as exc:
         logger.exception("Failed to fetch comments for %s/%s", channel, message_id)
         raise _map_telegram_error(exc) from exc
+
+
+# ---------------- Interactive login (used by the Android app) ----------------
+_pending_phone: str | None = None
+_pending_hash: str | None = None
+
+
+async def _connected_client() -> TelegramClient:
+    global client
+    if client is None:
+        client = TelegramClient(SESSION_PATH, API_ID, API_HASH)
+    if not client.is_connected():
+        await client.connect()
+    return client
+
+
+async def auth_status() -> dict:
+    tg = await _connected_client()
+    if await tg.is_user_authorized():
+        me = await tg.get_me()
+        return {"authorized": True, "bot": bool(me.bot), "name": me.first_name}
+    return {"authorized": False}
+
+
+def _normalize_phone(phone: str) -> str:
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    # Common Myanmar phone typo: +9595... (10 digits total instead of 11) -> +95995...
+    if len(digits) == 10 and digits.startswith("9595"):
+        digits = "95995" + digits[4:]
+    elif digits.startswith("09"):
+        digits = "959" + digits[2:]
+    return f"+{digits}" if digits else phone.strip()
+
+
+async def auth_send_code(phone: str) -> None:
+    global _pending_phone, _pending_hash
+    normalized = _normalize_phone(phone)
+    tg = await _connected_client()
+    sent = await tg.send_code_request(normalized)
+    _pending_phone, _pending_hash = normalized, sent.phone_code_hash
+
+
+async def auth_verify(code: str, password: str | None = None) -> dict:
+    """Returns {"authorized": True} or {"password_required": True}."""
+    global _pending_phone, _pending_hash
+    from telethon.errors import SessionPasswordNeededError
+
+    tg = await _connected_client()
+    try:
+        if password and not code:
+            await tg.sign_in(password=password)
+        elif code:
+            if not _pending_phone:
+                raise RuntimeError("Send the code first.")
+            await tg.sign_in(_pending_phone, code, phone_code_hash=_pending_hash)
+        else:
+            raise RuntimeError("Code required.")
+    except SessionPasswordNeededError:
+        if not password:
+            return {"password_required": True}
+        await tg.sign_in(password=password)
+    _pending_phone = None
+    _pending_hash = None
+    await ensure_user_account(tg)
+    return {"authorized": True}

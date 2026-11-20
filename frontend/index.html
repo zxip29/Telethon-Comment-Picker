@@ -3,20 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Giveaway Comment Viewer</title>
+  <title>TG Giveaway Inspector</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <header>
-      <h1>Giveaway Comment Viewer</h1>
+    <header class="dev-header">
+      <div class="header-top">
+        <div class="brand">
+          <span class="prompt">$</span>
+          <h1>tg-giveaway-inspector</h1>
+        </div>
+        <span id="session-badge" class="badge badge-online">MTProto · READY</span>
+      </div>
       <p class="subtitle">
-        Fetch all comments, then use filters to build your giveaway list.
+        GET /comments · Paginated GetDiscussionMessage &amp; GetRepliesRequest (100/page)
       </p>
     </header>
 
     <form id="fetch-form" class="card">
-      <label for="link-input">Post link</label>
+      <div class="field-header">
+        <label for="link-input">TARGET_POST_URI</label>
+        <span class="field-hint">t.me/&lt;channel&gt;/&lt;msg_id&gt;</span>
+      </div>
       <input
         id="link-input"
         type="url"
@@ -24,40 +33,58 @@
         autocomplete="off"
         required
       />
-      <button type="submit" id="fetch-btn">Fetch Comments</button>
+      <div class="action-row">
+        <button type="submit" id="fetch-btn" class="btn-primary">▶ EXECUTE FETCH</button>
+        <button type="button" id="stop-fetch-btn" class="btn-danger hidden">■ ABORT</button>
+      </div>
     </form>
 
     <div id="status" class="status hidden" role="status" aria-live="polite"></div>
 
     <section id="results" class="results hidden">
-      <div class="toolbar">
-        <div class="count-row">
-          <span class="count-label">Showing</span>
-          <span id="count-value" class="count-value">0</span>
-          <span class="count-label">of</span>
-          <span id="count-fetched" class="count-fetched">0</span>
-          <span class="count-label">fetched</span>
+      <div class="toolbar card-compact">
+        <div class="metrics">
+          <div class="metric">
+            <span class="metric-key">FILTERED</span>
+            <span id="count-value" class="metric-val accent">0</span>
+          </div>
+          <span class="metric-sep">/</span>
+          <div class="metric">
+            <span class="metric-key">FETCHED</span>
+            <span id="count-fetched" class="metric-val">0</span>
+          </div>
+          <span class="metric-sep">·</span>
+          <div class="metric">
+            <span class="metric-key">LATENCY</span>
+            <span id="latency-value" class="metric-val muted">0ms</span>
+          </div>
         </div>
-        <button type="button" id="copy-btn" class="copy-btn" disabled>Copy All</button>
+        <button type="button" id="copy-btn" class="copy-btn" disabled>⎘ COPY STDOUT</button>
       </div>
 
       <div id="filters-panel" class="filters card hidden">
-        <p class="filters-title">Filters</p>
+        <p class="filters-title">// PIPELINE FILTERS</p>
         <label class="filter-option">
           <input type="checkbox" id="filter-dedupe" />
-          Remove duplicate users (keep first comment)
+          <span><code>--dedupe-users</code> · keep first comment per user_id</span>
         </label>
         <label class="filter-option">
           <input type="checkbox" id="filter-hide-media" />
-          Hide media messages (images, video, stickers, files)
+          <span><code>--no-media</code> · exclude images, video, stickers, files</span>
         </label>
         <label class="filter-option">
           <input type="checkbox" id="filter-text-only" />
-          Text comments only (non-empty message)
+          <span><code>--non-empty</code> · require non-empty text body</span>
         </label>
       </div>
 
-      <pre id="comments-pre" class="comments-pre"></pre>
+      <div class="terminal-box">
+        <div class="terminal-bar">
+          <span class="terminal-title">stdout · formatted giveaway entries</span>
+          <span id="line-count-badge" class="terminal-meta">0 lines</span>
+        </div>
+        <pre id="comments-pre" class="comments-pre"></pre>
+      </div>
     </section>
   </main>
 

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Developer Top Control Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:background="@color/surface_dark">
+
+        <View
+            android:id="@+id/serverDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@color/error_red" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="10dp">
+
+            <TextView
+                android:id="@+id/serverTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="uvicorn://127.0.0.1:8000"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/serverStateBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="STOPPED · pid --"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnToggleServer"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="88dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="▶ RUN"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/success_green" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_dark" />
+
+    <!-- Main Content Area -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <ScrollView
+            android:id="@+id/loginPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <!-- Auth / Server Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$ tg-giveaway-daemon --auth"
+                        android:textColor="@color/accent"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/statusText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginBottom="14dp"
+                        android:text="[IDLE] Press RUN or Send code to boot daemon"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+
+                    <LinearLayout
+                        android:id="@+id/apiGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TG_API_ID"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:layout_marginBottom="4dp" />
+
+                        <EditText
+                            android:id="@+id/inputApiId"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:background="@drawable/input_bg"
+                            android:hint="33407583"
+                            android:inputType="number"
+                            android:padding="12dp"
+                            android:textSize="13sp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TG_API_HASH"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace"
+                            android:layout_marginBottom="4dp" />
+
+                        <EditText
+                            android:id="@+id/inputApiHash"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:background="@drawable/input_bg"
+                            android:hint="api_hash"
+                            android:inputType="text"
+                            android:padding="12dp"
+                            android:textSize="13sp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="USER_PHONE (MTProto User Account)"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/inputPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:background="@drawable/input_bg"
+                        android:hint="+959953237832"
+                        android:inputType="phone"
+                        android:padding="12dp"
+                        android:textSize="13sp"
+                        android:fontFamily="monospace"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_muted" />
+
+                    <Button
+                        android:id="@+id/btnSendCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="POST /auth/send_code"
+                        android:textAllCaps="false"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:id="@+id/otpGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <EditText
+                            android:id="@+id/inputOtp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:background="@drawable/input_bg"
+                            android:hint="OTP_CODE (e.g. 12345)"
+                            android:inputType="number"
+                            android:padding="12dp"
+                            android:textSize="13sp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted" />
+
+                        <EditText
+                            android:id="@+id/inputPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:background="@drawable/input_bg"
+                            android:hint="2FA_PASSWORD"
+                            android:inputType="textPassword"
+                            android:padding="12dp"
+                            android:textSize="13sp"
+                            android:fontFamily="monospace"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted"
+                            android:visibility="gone" />
+
+                        <Button
+                            android:id="@+id/btnVerify"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="POST /auth/verify"
+                            android:textAllCaps="false"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Developer Live Console Log Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="STDOUT / STDERR CONSOLE"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:id="@+id/consoleLog"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="[sys] ready"
+                        android:textColor="@color/success_green"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:lineSpacingExtra="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

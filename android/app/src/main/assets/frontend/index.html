@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram Giveaway Comment Viewer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Giveaway Comment Viewer</h1>
+      <p class="subtitle">
+        Fetch all comments, then use filters to build your giveaway list.
+      </p>
+    </header>
+
+    <form id="fetch-form" class="card">
+      <label for="link-input">Post link</label>
+      <input
+        id="link-input"
+        type="url"
+        placeholder="https://t.me/channelname/123"
+        autocomplete="off"
+        required
+      />
+      <button type="submit" id="fetch-btn">Fetch Comments</button>
+    </form>
+
+    <div id="status" class="status hidden" role="status" aria-live="polite"></div>
+
+    <section id="results" class="results hidden">
+      <div class="toolbar">
+        <div class="count-row">
+          <span class="count-label">Showing</span>
+          <span id="count-value" class="count-value">0</span>
+          <span class="count-label">of</span>
+          <span id="count-fetched" class="count-fetched">0</span>
+          <span class="count-label">fetched</span>
+        </div>
+        <button type="button" id="copy-btn" class="copy-btn" disabled>Copy All</button>
+      </div>
+
+      <div id="filters-panel" class="filters card hidden">
+        <p class="filters-title">Filters</p>
+        <label class="filter-option">
+          <input type="checkbox" id="filter-dedupe" />
+          Remove duplicate users (keep first comment)
+        </label>
+        <label class="filter-option">
+          <input type="checkbox" id="filter-hide-media" />
+          Hide media messages (images, video, stickers, files)
+        </label>
+        <label class="filter-option">
+          <input type="checkbox" id="filter-text-only" />
+          Text comments only (non-empty message)
+        </label>
+      </div>
+
+      <pre id="comments-pre" class="comments-pre"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

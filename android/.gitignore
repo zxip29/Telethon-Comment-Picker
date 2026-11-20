@@ -1,0 +1,12 @@
+local.properties
+.gradle/
+build/
+app/src/main/python/frontend/
+app/src/main/python/config.py
+app/src/main/python/main.py
+app/src/main/python/rate_limit.py
+app/src/main/python/link_parser.py
+app/src/main/python/formatters.py
+app/src/main/python/telegram_service.py
+app/src/main/python/*.session
+
